@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<launch>
+
+    <arg name="instance" default="0"/>
+    <arg name="gcs_url" default=""/>
+    <arg name="tgt_system" default="1"/>
+    <arg name="tgt_component" default="1"/>
+    <arg name="log_output" default="screen"/>
+    <arg name="fcu_protocol" default="v2.0"/>
+    <arg name="respawn_mavros" default="false"/>
+
+    <let name="bind_port" value="$(eval '14551 + 10 + int(\'$(var instance)\') ')"/>
+    <let name="remote_port" value="$(eval '14680 + int(\'$(var instance)\') ')"/>
+    <let name="fcu_url" value="udp://:$(var bind_port)@localhost:$(var remote_port)"/>
+    <let name="namespace" value="/uav$(var instance)/mavros"/>
+
+    <node pkg="mavros" exec="mavros_node" namespace="$(var namespace)" output="screen">
+        <param name="fcu_url" value="$(var fcu_url)"/>
+        <param name="gcs_url" value="$(var gcs_url)"/>
+        <param name="tgt_system" value="$(eval '1 + int(\'$(var instance)\') ')"/>
+        <param name="tgt_component" value="$(var tgt_component)"/>
+        <param name="fcu_protocol" value="$(var fcu_protocol)"/>
+    </node>
+</launch>

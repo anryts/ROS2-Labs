@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<launch>
+
+    <!-- Drone object #1-->
+    <include file="$(find-pkg-share simple_ros2_app)/launch/spawn_drone_launch.xml">
+        <arg name="instance" value="0"></arg>
+        <arg name="sitl" value="px4"></arg>
+        <arg name="suffix" value="_cam"></arg>
+    </include>
+
+    <!-- Drone object #2-->
+    <include file="$(find-pkg-share simple_ros2_app)/launch/spawn_drone_launch.xml">
+        <arg name="instance" value="1"></arg>
+        <arg name="sitl" value="px4"></arg>
+        <arg name="suffix" value="_cam"></arg>
+    </include>
+
+    <!-- Drone object #3-->
+    <!--    <include file="$(find-pkg-share simple_ros2_app)/launch/spawn_drone_launch.xml">-->
+    <!--        <arg name="instance" value="2"></arg>-->
+    <!--        <arg name="sitl" value="px4"></arg>-->
+    <!--    </include>-->
+
+    <node pkg="simple_ros2_app" exec="ground_control" output="screen"/>
+    <node pkg="simple_ros2_app" exec="swarm_control" output="screen"/>
+
+
+</launch>

@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<launch>
+
+    <let name="sdf" value="$(find-pkg-share simple_ros2_app)/models/iris0" />
+
+    <!-- Gazebo model -->
+    <node name="spawn_model" pkg="simple_ros2_app" exec="$(find-pkg-share simple_ros2_app)/scripts/spawn_model.sh" args="$(var sdf)" />
+
+    <!-- Autopilot software -->
+    <arg name="est" default="ekf2"/>
+    <arg name="vehicle" default="iris"/>
+
+    <set_env name="PX4_SIM_MODEL" value="$(var vehicle)" />
+    <set_env name="PX4_ESTIMATOR" value="$(var est)" />
+    <!-- PX4 SITL -->
+    <node name="sitl_px4" pkg="simple_ros2_app" exec="$(find-pkg-share simple_ros2_app)/scripts/px4.sh" output="screen">
+    </node>
+
+    <!-- MAVROS node -->
+    <arg name="gcs_url" default=""/>
+	<arg name="tgt_system" default="1"/>
+	<arg name="tgt_component" default="1"/>
+	<arg name="log_output" default="screen" />
+	<arg name="fcu_protocol" default="v2.0" />
+
+	<let name="fcu_url" value="udp://:14540@localhost:14580"/>
+
+	<node pkg="mavros" exec="mavros_node" output="screen">
+		<param name="fcu_url" value="$(var fcu_url)" />
+		<param name="gcs_url" value="$(var gcs_url)" />
+		<param name="tgt_system" value="1" />
+		<param name="tgt_component" value="$(var tgt_component)" />
+		<param name="fcu_protocol" value="$(var fcu_protocol)" />
+	</node>
+
+    <!-- Mission node -->
+    <node pkg="simple_ros2_app" exec="mission" output="screen" />
+
+</launch>

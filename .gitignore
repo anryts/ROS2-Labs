@@ -1,0 +1,54 @@
+# ROS 2 build artifacts
+build/
+install/
+log/
+
+# Python cache and build artifacts
+*.pyc
+*.pyo
+__pycache__/
+*.egg-info/
+.eggs/
+
+# CMake and colcon-generated files
+CMakeFiles/
+cmake_install.cmake
+Makefile
+colcon_install_layout.*
+
+# ROS interface generated files
+msg/_*.py
+srv/_*.py
+action/_*.py
+
+# Dynamic reconfigure
+*.cfgc
+cfg/cpp/
+cfg/*.py
+
+# Gazebo simulation files
+*.sdf
+*.world
+*.dae
+*.obj
+*.stl
+*.mesh
+*.urdf
+*.xacro
+*.config
+*.materials
+*.osg
+*.mtl
+
+# IDE and editor settings
+.vscode/
+.idea/
+*.iml
+*.swp
+*.swo
+*.user
+*.DS_Store
+
+# Backup and temporary files
+*~
+.#*

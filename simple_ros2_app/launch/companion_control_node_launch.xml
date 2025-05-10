@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="instance" default="0" />
+    <arg name="sitl" default="px4" />
+    <let name="namespace" value="/uav$(var instance)" />
+
+    <node pkg="simple_ros2_app"
+        exec="$(var sitl)_control"
+        namespace="$(var namespace)"
+        output="screen"
+    />
+</launch>

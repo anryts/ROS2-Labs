@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<launch>
+
+    <arg name="instance" default="0"/>
+    <arg name="model" default="gazebo-iris"/>
+
+    <!-- vehicle model and config -->
+    <let name="ID" value="$(var instance)"/>
+    <let name="param" value="$(var model)$(var instance)"/>
+    <!-- ArduPilot SITL -->
+    <node name="sitl_$(var ID)"
+          pkg="simple_ros2_app"
+          exec="$(find-pkg-share simple_ros2_app)/scripts/ardupilot.sh"
+          output="screen"
+          args="$(var param) $(var instance)">
+    </node>
+
+</launch>

@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="world" default="px4_outdoor"/>
+
+    <include file="$(find-pkg-share gazebo_ros)/launch/gzserver.launch.py">
+        <arg name="world" value="$(find-pkg-share simple_ros2_app)/worlds/$(var world).world"/>
+    </include>
+
+    <include file="$(find-pkg-share gazebo_ros)/launch/gzclient.launch.py"/>
+
+</launch>

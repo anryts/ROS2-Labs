@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<launch>
+
+    <arg name="instance" default="0"/>
+    <set_env name="PX4_SIM_HOST_ADDR" value="0.0.0.0"/>
+
+    <!-- vehicle model and config -->
+    <arg name="est" default="ekf2"/>
+    <arg name="vehicle" default="iris"/>
+    <let name="ID" value="$(var instance)"/>
+    <set_env name="PX4_SIM_MODEL" value="$(var vehicle)"/>
+    <set_env name="PX4_ESTIMATOR" value="$(var est)"/>
+    <!-- PX4 SITL -->
+    <node name="sitl_$(var ID)"
+          pkg="simple_ros2_app"
+          exec="$(find-pkg-share simple_ros2_app)/scripts/px4.sh"
+          output="screen"
+          args="$(var instance)">
+    </node>
+
+</launch>
