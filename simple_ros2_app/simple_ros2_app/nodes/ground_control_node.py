@@ -11,14 +11,11 @@ class GroundControlNode(Node):
     def __init__(self, node_name):
         super().__init__(node_name)
 
-        self.drones_names = ["/uav0", "/uav1"]
+        self.drones_names = ["/uav1"]
         self.drones = [Drone(drone_name, self) for drone_name in self.drones_names]
 
         self.coordinates_: list[Coordinate] = [
             Coordinate(5.0, 5.0, 5.0),
-            Coordinate(20.0, 20.0, 20.0),
-            Coordinate(35.0, 25.0, 13.0),
-            Coordinate(44.0, 30.0, 8.0),
         ]
         self._circle_coordinates: list[Coordinate] = self.generate_circle_coordinates(
             radius=25.0, num_points=20
@@ -30,7 +27,6 @@ class GroundControlNode(Node):
 
     def send_command_(self):
         """Send the next set of coords to the PX4CompanionNode."""
-
         if not all(drone.is_drone_reached_coord for drone in self.drones):
             self.get_logger().info("Waiting for all drones to reach the coordinates")
             return

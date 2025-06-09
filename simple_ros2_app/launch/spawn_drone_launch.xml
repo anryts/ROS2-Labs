@@ -4,6 +4,8 @@
     <arg name="instance" default="0"/>
     <arg name="sitl" default="px4"/>
     <arg name="suffix" default=""/>
+    <arg name="use_keyboard" default="false"/>
+    <arg name="detect_mode" default="false"/>
     <let name="sdf" value="$(find-pkg-share simple_ros2_app)/models/$(var sitl)_iris$(var instance)$(var suffix)"/>
 
 
@@ -26,6 +28,8 @@
     <include file="$(find-pkg-share simple_ros2_app)/launch/companion_control_node_launch.xml">
         <arg name="instance" value="$(var instance)"/>
         <arg name="sitl" value="$(var sitl)"/>
+        <arg name="use_keyboard" value="$(var use_keyboard)"/>
+        <arg name="detect_mode" value="$(var detect_mode)"/>
     </include>
 
     <!-- Optical Flow -->

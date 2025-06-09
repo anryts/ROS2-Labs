@@ -6,13 +6,17 @@
         <arg name="instance" value="0"></arg>
         <arg name="sitl" value="px4"></arg>
         <arg name="suffix" value="_cam"></arg>
+        <arg name="use_keyboard" value="true"></arg>
+        <arg name="detect_mode" value="true"></arg>
     </include>
 
-    <!-- Drone object #2-->
+    <!--    Drone object #2-->
     <include file="$(find-pkg-share simple_ros2_app)/launch/spawn_drone_launch.xml">
         <arg name="instance" value="1"></arg>
         <arg name="sitl" value="px4"></arg>
-        <arg name="suffix" value="_cam"></arg>
+        <arg name="suffix" value=""></arg>
+        <arg name="use_keyboard" value="false"></arg>
+        <arg name="detect_mode" value="false"></arg>
     </include>
 
     <!-- Drone object #3-->
@@ -21,8 +25,8 @@
     <!--        <arg name="sitl" value="px4"></arg>-->
     <!--    </include>-->
 
-    <node pkg="simple_ros2_app" exec="ground_control" output="screen"/>
-    <node pkg="simple_ros2_app" exec="swarm_control" output="screen"/>
+    <!--    <node pkg="simple_ros2_app" exec="ground_control" output="screen"/>-->
+    <!--    <node pkg="simple_ros2_app" exec="swarm_control" output="screen"/>-->
 
 
 </launch>

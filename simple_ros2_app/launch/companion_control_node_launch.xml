@@ -1,12 +1,17 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <launch>
-    <arg name="instance" default="0" />
-    <arg name="sitl" default="px4" />
-    <let name="namespace" value="/uav$(var instance)" />
+    <arg name="instance" default="0"/>
+    <arg name="sitl" default="px4"/>
+    <arg name="use_keyboard" default="false"/>
+    <arg name="detect_mode" default="false"/>
+    <let name="namespace" value="/uav$(var instance)"/>
 
     <node pkg="simple_ros2_app"
-        exec="$(var sitl)_control"
-        namespace="$(var namespace)"
-        output="screen"
-    />
+          exec="px4_control"
+          name="companion_node"
+          namespace="$(var namespace)"
+          output="screen">
+        <param name="use_keyboard" value="$(var use_keyboard)"/>
+        <param name="detect_mode" value="$(var detect_mode)"/>
+    </node>
 </launch>
