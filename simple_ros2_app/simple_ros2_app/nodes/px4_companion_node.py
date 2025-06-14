@@ -193,9 +193,9 @@ class PX4CompanionNode(Node):
     def drone_detection_callback(self, msg: DroneDetection):
         """Store the latest drone detection."""
         self.detected_drone = msg
-        # self.get_logger().info(
-        #     f"Received drone detection: x={msg.x_min}-{msg.x_max}, y={msg.y_min}-{msg.y_max}, prob={msg.probability}"
-        # )
+        self.get_logger().info(
+            f"Received drone detection: x={msg.x_min}-{msg.x_max}, y={msg.y_min}-{msg.y_max}, prob={msg.probability}"
+        )
 
     def image_callback(self, msg: Image):
         """Update image dimensions."""
@@ -204,7 +204,6 @@ class PX4CompanionNode(Node):
 
     def set_velocity_from_detection(self):
         """Set velocity to follow the detected drone."""
-        self.get_logger().info(f"{self._is_auto_follow} {self.detect_mode}")
         if self.detected_drone is not None and self._is_auto_follow:
             self.get_logger().info("Following drone")
             center_x = (self.detected_drone.x_min + self.detected_drone.x_max) / 2
@@ -219,7 +218,7 @@ class PX4CompanionNode(Node):
             )
             # Calculate velocity based on error
             # TODO: make it more smooth
-            Kp = 0.001
+            Kp = 0.01
             self.target_pose_.pose.position.x += Kp * error_x
             self.target_pose_.pose.position.y = -Kp * error_y
 

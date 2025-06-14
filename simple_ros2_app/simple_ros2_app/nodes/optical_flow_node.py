@@ -18,6 +18,7 @@ class OpticalFlowNode(Node):
         self.drone_name = self.get_namespace()
         self.cv_bridge = CvBridge()
         self.prev_frame = None
+        self.detected_box: DroneDetection = None
 
         # Load YOLOv8 model
         self.yolo_model = YOLO("yolov8n.pt")
@@ -33,8 +34,15 @@ class OpticalFlowNode(Node):
 
         # Publisher for detected drone bounding box
         self.drone_detection_pub = self.create_publisher(
-            DroneDetection, f"{self.drone_name}/drone_detection", 10
+            DroneDetection,
+            f"{self.drone_name}/drone_detection",
+            qos.qos_profile_sensor_data,
         )
+        self._img = None
+        self._timer = self.create_timer(1, self._timer_callback)
+
+    def _timer_callback(self):
+        self._model_inference(self._img)
 
     def image_processing_callback(self, msg: Image):
         """Process camera image for optical flow and YOLO detection."""
@@ -46,13 +54,63 @@ class OpticalFlowNode(Node):
         overlay = cv_img.copy()
 
         self._optical_flow(cv_img, overlay)
-        self._model_inference(cv_img, overlay)
-
+        self._tracking_callback(cv_img, overlay)
         cv2.imshow("Optical Flow and YOLO", overlay)
+        self._img = cv_img
         cv2.waitKey(1)
 
-    def _model_inference(self, cv_img, overlay) -> None:
+    def _tracking_callback(self, img, overlay) -> None:
+        """Callback for tracking drone by MOSSE tracker."""
+        if self.detected_box is None:
+            self._model_inference(img)
+            return
+
+        tracker = cv2.TrackerMIL.create()
+        width = self.detected_box.x_max - self.detected_box.x_min
+        height = self.detected_box.y_max - self.detected_box.y_min
+        if width < 0 or height < 0:
+            # Need to make inference one more time
+            self.get_logger().info(f"detected box:{self.detected_box}")
+            self._model_inference(img)
+            return
+
+        tracker.init(
+            img,
+            (
+                self.detected_box.x_min,
+                self.detected_box.y_min,
+                width,
+                height,
+            ),
+        )
+        success, bbox = tracker.update(img)
+        if success:
+            x, y, w, h = [int(v) for v in bbox]
+            cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            box_msg = DroneDetection()
+            box_msg.x_min = x
+            box_msg.y_min = y
+            box_msg.x_max = x + w
+            box_msg.y_max = y + h
+            self.detected_box = box_msg
+            self.drone_detection_pub.publish(DroneDetection())
+            cv2.rectangle(
+                overlay,
+                (x, y),
+                (x + w, y + h),
+                (213, 36, 235),
+                2,
+            )
+        else:
+            self.get_logger().info("Tracking failed, reinitializing tracker.")
+            self.detected_box = None
+            self._model_inference(img)
+
+    def _model_inference(self, cv_img) -> None:
         """Run YOLO model inference on the given image."""
+        if cv_img is None:
+            return
+        self.get_logger().info(f"Running inference")
         results = self.yolo_model.predict(cv_img, verbose=False)
         best_box = None
         max_confidence = 0.0
@@ -67,23 +125,23 @@ class OpticalFlowNode(Node):
         # Publish the best bounding box
         if best_box is not None:
             box_msg = DroneDetection()
-            box_msg.probability = float(best_box.conf[0])
+            # box_msg.probability = float(best_box.conf[0])
             box_msg.x_min = int(best_box.xyxy[0][0])
             box_msg.y_min = int(best_box.xyxy[0][1])
             box_msg.x_max = int(best_box.xyxy[0][2])
             box_msg.y_max = int(best_box.xyxy[0][3])
-            box_msg.class_name = self.target_class
-            self.drone_detection_pub.publish(box_msg)
+            # box_msg.class_name = self.target_class
+            self.detected_box = box_msg
 
         # Draw bounding box if detected
-        if best_box is not None:
-            cv2.rectangle(
-                overlay,
-                (int(best_box.xyxy[0][0]), int(best_box.xyxy[0][1])),
-                (int(best_box.xyxy[0][2]), int(best_box.xyxy[0][3])),
-                (255, 0, 0),
-                2,
-            )
+        # if best_box is not None:
+        #     cv2.rectangle(
+        #         overlay,
+        #         (int(best_box.xyxy[0][0]), int(best_box.xyxy[0][1])),
+        #         (int(best_box.xyxy[0][2]), int(best_box.xyxy[0][3])),
+        #         (255, 0, 0),
+        #         2,
+        #     )
 
     def _optical_flow(self, cv_img, overlay: cv2.Mat) -> None:
         """Process the incoming image message for optical flow."""
@@ -120,7 +178,6 @@ class OpticalFlowNode(Node):
                 cv2.arrowedLine(
                     overlay, start_point, end_point, (0, 255, 0), 2, tipLength=0.4
                 )
-
         # Update previous frame
         self.prev_frame = gray
 
