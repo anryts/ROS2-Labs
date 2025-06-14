@@ -69,8 +69,6 @@ class OpticalFlowNode(Node):
         width = self.detected_box.x_max - self.detected_box.x_min
         height = self.detected_box.y_max - self.detected_box.y_min
         if width < 0 or height < 0:
-            # Need to make inference one more time
-            self.get_logger().info(f"detected box:{self.detected_box}")
             self._model_inference(img)
             return
 
@@ -93,7 +91,7 @@ class OpticalFlowNode(Node):
             box_msg.x_max = x + w
             box_msg.y_max = y + h
             self.detected_box = box_msg
-            self.drone_detection_pub.publish(DroneDetection())
+            self.drone_detection_pub.publish(self.detected_box)
             cv2.rectangle(
                 overlay,
                 (x, y),
@@ -110,7 +108,6 @@ class OpticalFlowNode(Node):
         """Run YOLO model inference on the given image."""
         if cv_img is None:
             return
-        self.get_logger().info(f"Running inference")
         results = self.yolo_model.predict(cv_img, verbose=False)
         best_box = None
         max_confidence = 0.0

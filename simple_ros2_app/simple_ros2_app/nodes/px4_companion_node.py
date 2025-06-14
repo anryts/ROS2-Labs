@@ -8,6 +8,7 @@ from mavros_msgs.srv import SetMode, CommandBool
 from pynput import keyboard
 from rclpy.node import Node
 from sensor_msgs.msg import Image
+from simple_pid import PID
 from std_msgs.msg import Bool
 
 from simple_ros2_interfaces.msg import DroneDetection
@@ -20,10 +21,16 @@ class PX4CompanionNode(Node):
     def __init__(self, node_name: str):
         super().__init__(node_name)
         self.drone_name_ = self.get_namespace()
-
+        self._image_width = 640
+        self._image_height = 480
         # Declare and get parameters
         self.declare_parameter("use_keyboard", False)
         self.declare_parameter("detect_mode", False)
+        self.pid_x = PID(0.001, 0.00001, 0.000001, setpoint=self._image_width / 4)
+        self.pid_y = PID(0.001, 0.00001, 0.000001, setpoint=self._image_height / 4)
+        self.pid_x.output_limits = (-1, 1)
+        self.pid_y.output_limits = (-1, 1)
+
         self.use_keyboard = (
             self.get_parameter("use_keyboard").get_parameter_value().bool_value
         )
@@ -193,9 +200,6 @@ class PX4CompanionNode(Node):
     def drone_detection_callback(self, msg: DroneDetection):
         """Store the latest drone detection."""
         self.detected_drone = msg
-        self.get_logger().info(
-            f"Received drone detection: x={msg.x_min}-{msg.x_max}, y={msg.y_min}-{msg.y_max}, prob={msg.probability}"
-        )
 
     def image_callback(self, msg: Image):
         """Update image dimensions."""
@@ -205,29 +209,32 @@ class PX4CompanionNode(Node):
     def set_velocity_from_detection(self):
         """Set velocity to follow the detected drone."""
         if self.detected_drone is not None and self._is_auto_follow:
-            self.get_logger().info("Following drone")
             center_x = (self.detected_drone.x_min + self.detected_drone.x_max) / 2
             center_y = (self.detected_drone.y_min + self.detected_drone.y_max) / 2
-            image_center_x = self.image_width / 2
-            error_x = center_x - image_center_x
-            error_y = center_y - (self.image_height / 2)
+
+            # Update the PID setpoints to follow the moving target
+            self.pid_x.setpoint = center_x
+            self.pid_y.setpoint = center_y
+
+            # Get current error from image center
+            x_error = self.pid_x(
+                self.image_width / 2
+            )  # control effort to shift x toward target
+            y_error = self.pid_y(self.image_height / 2)  # same for y
+
             self.get_logger().info(
-                f"Detected drone center: ({center_x}, {center_y}), "
-                f"Image center: ({image_center_x}, {self.image_height / 2}), "
-                f"Errors: ({error_x}, {error_y})"
+                f"Setpoints: ({self.pid_x.setpoint}, {self.pid_y.setpoint}), "
+                f"Errors: ({x_error}, {y_error})"
             )
-            # Calculate velocity based on error
-            # TODO: make it more smooth
-            Kp = 0.01
-            self.target_pose_.pose.position.x += Kp * error_x
-            self.target_pose_.pose.position.y = -Kp * error_y
+
+            # Apply correction (can scale more cleverly later)
+            if abs(x_error) > 0.02 or abs(y_error) > 0.02:
+                self.target_pose_.pose.position.x += x_error
+                self.target_pose_.pose.position.y = -y_error
 
     def timer_callback_(self):
         """Handle periodic tasks."""
         if self.use_keyboard:
-            self.get_logger().info(
-                f"{self.current_vel_.twist.linear.x}, {self.current_vel_.twist.linear.y}, {self.current_vel_.twist.linear.z}"
-            )
             self._update_coordinates_via_keyboard()
         if self.detect_mode:
             self.set_velocity_from_detection()

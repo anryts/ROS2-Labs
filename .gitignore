@@ -52,3 +52,7 @@ cfg/*.py
 # Backup and temporary files
 *~
 .#*
+
+*.pt
+
+*.zip
